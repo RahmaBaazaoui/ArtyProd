@@ -1,0 +1,218 @@
+{% extends 'ArtyProd/base.html' %}
+{% block title %} List de demande {% endblock %}
+{% load static %}
+{% block content %}
+{% load custom_filters %}
+
+{% if demandes_projet %}
+<style>
+    .cta1 {
+      display: inline-block;
+      padding: 3px 15px; /* Decreased padding */
+      color: white;
+      background-color: transparent;
+      border: 2px solid crimson;
+      font-size: 1.6rem; /* Decreased font size */
+      text-transform: uppercase;
+      letter-spacing: 0.1rem;
+      margin-top: 30px;
+      transition: 0.3s ease;
+      transition-property: background-color, color;
+  }
+  
+  .cta1:hover {
+      color: white;
+      background-color: crimson;
+  }
+  
+  </style>
+<section>
+    
+    {% if user.is_active and not user.is_staff  %}
+    <div class="service-top">
+        <h1 class="section-title">Consulté l'avancement <span>de votre </span>projet</h1> 
+      </div>
+    {% endif %}
+    {% if user.is_superuser %}
+   
+    <div class="service-top">
+        <h1 class="section-title">Liste des  <span>demandes effectuer </span>par les clients</h1>  
+      </div>
+    {% endif %}
+    {% if user.is_staff and not user.is_superuser %}
+    <div class="service-top">
+        <h1 class="section-title">La liste de projets <span>a réalisée avec </span>avec votre equipe</h1>  
+      </div>
+    {% endif %}
+    
+    <div class="dep" style="margin-bottom: 100px;">
+        <div class="container">
+
+            <div class="owl-carousel owl-theme dep-post">
+                {% for demande in demandes_projet %}
+                {% if demande.client == user.client %}
+                <!-- AFFICHER LES PROJETS DE CE CLIENT -->
+                <div class="dep-content shadow" data-aos="fade-right" style="border: 1px solid black; box-shadow: inset; margin: 20px; margin-left: 100px;"   data-aos-delay="200">
+                    <div class="dep-title">
+                        <h2> Project  Title :  {{ demande.libelle }}</h2>
+                        <br>
+                        <p><strong>Description :</strong>{{ demande.description }}</p>
+                        <h2><strong>Date de Demande de projet :  </strong>{{ demande.date_demande }}</h2>
+                        <br>
+                        <h2><strong>Service :  </strong>{{ demande.service }}</h2>
+                        <h2><strong>Etat d'avancement : </strong>{{ demande.statut }}</h2>
+                        <form method="POST" action="{% url 'supprimer_demande_projet' demande.id %}">
+                            {% csrf_token %}
+                        <button type="button" class="cta1"
+                                onclick="confirmDelete('{{ demande.libelle }}', this.form)" style="color: black;">Supprimier</button>
+                   
+                            </form>         </div>
+                </div>
+                {% elif user.is_superuser %}
+                <!-- AFFICHER TOUS LES PROJETS POUR L'ADMIN -->
+                <div class="dep-content" data-aos="fade-right" data-aos-delay="200" style="border: 1px solid black; box-shadow: inset; margin: 20px; margin-left: 100px; margin-bottom: 40px;">
+                    <div class="dep-title">
+                        <h2> Project  Title :  {{ demande.libelle }}</h2><br><br>
+                        <h2> Nom Client  :  {{ demande.client }}</h2>
+                        <br>
+                        <p><strong>Description :</strong>{{ demande.description }}</p>
+                        <h2><strong>Date de Demande de projet :  </strong>{{ demande.date_demande }}</h2>
+                        <br>
+                        <h2><strong>Service :  </strong>{{ demande.service }}</h2>
+                        <h2><strong>Etat d'avancement : </strong>{{ demande.statut }}</h2>
+                    </div>
+                    <!---------------------- MODIFIER ------------------------->
+                    <div class="col-auto" data-aos="fade-up" data-aos-delay="100">
+                        <a href="{% url 'modifier_demande_projet' demande.id %}" class="cta1" style="color: black;">
+                                Modifier
+                        </a>
+                    </div>
+                    <br>
+                    <!---------------------- DELETE ------------------------->
+                    <div class="col-auto" data-aos="fade-up" data-aos-delay="100">
+                        <form method="POST" action="{% url 'supprimer_demande_projet' demande.id %}">
+                            {% csrf_token %}
+                            <button type="button" class="cta1" style="color: black;"
+                                onclick="confirmDelete('{{ demande.libelle }}', this.form)">Supprimier</button>
+                        </form>
+                    </div><br>
+                </div>
+                {% elif user|user_belongs_to_team:demande.equipe.nom and user.is_staff %}
+                <!-- AFFICHER LES PROJETS POUR LES UTILISATEURS DE L'ÉQUIPE -->
+                <div class="dep-content" data-aos="fade-right" data-aos-delay="200">
+                    <div class="dep-title">
+                        <h2>{{ demande.libelle }}</h2>
+                        <br>
+                        <p>{{ demande.description }}</p>
+                        <h3>{{ demande.date_demande }}</h3>
+                        <br>
+                        <h4>{{ demande.service }}</h4>
+                        <h4>{{ demande.equipe }}</h4>
+                        <h3>{{ demande.statut }}</h3>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div class="owl-navigation">
+                <span class="owl-nav-prev"><i class="fas fa-long-arrow-alt-left"></i></span>
+                <span class="owl-nav-next"><i class="fas fa-long-arrow-alt-right"></i></span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDelete(nom, form) {
+        Swal.fire({
+            title: 'Êtes-vous sûr?',
+            text: "Vous ne pourrez pas annuler cette action!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Oui, supprimez-le!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+                Swal.fire(
+                    'Supprimé!',
+                    'Le service a été supprimé.',
+                    'success'
+                )
+            }
+        })
+    }
+</script>
+<style>
+    main .dep{
+    background: url('../img/bg2.png');
+    background-repeat: no-repeat;
+    background-position: right;
+    height: 100vh;
+    width: 100%;
+    background-size: 65%;
+}
+
+main .dep .dep-post{
+    padding-top: 6rem;
+}
+
+main .dep-post .dep-content{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    width: 80%;
+    margin: 3rem 2rem;
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.2);
+}
+
+main .dep-content .dep-title{
+    padding: 2rem 0;
+}
+
+main .dep-content .btn-dep{
+    padding: .7rem 2rem;
+    background: var(--sky);
+    margin: .5rem;
+}
+main .dep-content .btn-dep-alert{
+    padding: .7rem 2rem;
+    background: rgb(224, 147, 92);
+    margin: .5rem;
+}
+main .dep-content .btn-dep-danger{
+    padding: .7rem 2rem;
+    background: rgb(202, 56, 56);
+    margin: .5rem;
+}
+
+main .dep-content span{
+    display: block;
+}
+
+section .container .owl-nav{
+    position: absolute;
+    top: 0%;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.owl-nav .owl-prev .owl-nav-prev,
+.owl-nav .owl-next .owl-nav-next{
+    color: var(--text-gray);
+    background: transparent;
+    font-size: 2rem;
+}
+
+.owl-theme .owl-nav [class*='owl-']:hover{
+    background: transparent;
+    color: var(--midnight);
+}
+
+.owl-theme .owl-nav [class*='owl-']{
+    outline: none;
+}
+</style>
+{% endblock %}

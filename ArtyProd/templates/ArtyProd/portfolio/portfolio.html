@@ -1,0 +1,68 @@
+{% extends 'ARTYPROD/base.html' %}
+{% block title %} Portfolio {% endblock %}
+{% load static %}
+{% block content %}
+<!-- Projects Section -->
+<style>
+  .cta1 {
+	display: inline-block;
+	padding: 3px 15px; /* Decreased padding */
+	color: rgb(0, 0, 0);
+	background-color: transparent;
+	border: 2px solid crimson;
+	font-size: 1.6rem; /* Decreased font size */
+	text-transform: uppercase;
+	letter-spacing: 0.1rem;
+	margin-top: 30px;
+	transition: 0.3s ease;
+	transition-property: background-color, color;
+}
+
+.cta1:hover {
+	color: white;
+	background-color: crimson;
+}
+
+</style>
+
+<section id="projects">
+    <div class="projects container">
+      <div class="projects-header">
+       
+        <h1 class="section-title">Recent <span>Projects</span></h1>
+      </div>
+      {% if user.is_superuser or user.is_staff %}
+      <a href="{% url 'add_projet' %}"  type="button" class="cta " style="margin-bottom: 20px;">
+        <h4 style="color: black;"> Add Project </h4>
+      </a>
+      {% endif %}
+      {% for project in list %}
+      <div class="all-projects">
+        <div class="project-item">
+          <div class="project-info">
+            <h1>{{ project.libelle }}</h1>
+            <h2>{{ project.service }}</h2>
+            <p>{{ project.description}}</p>
+            <br><br>
+            {% if user.is_superuser or user.is_staff %}
+      <a href="{% url 'edit_projet'  project.id %}"  type="button" class="cta1 " style="margin-bottom: 1px;">
+        <h4 style="color: rgb(255, 255, 255);">Edit</h4>
+      </a>
+      {% endif %}
+      {% if user.is_superuser or user.is_staff %}
+      <a href="{% url 'delete_projet'  project.id %}" type="button" class="cta1 " style="margin-bottom: 10px;margin-top: 5px;">
+        <h4 style="color: rgb(255, 255, 255);">Delete</h4>
+      </a>
+      {% endif %}
+          </div>  
+          <div class="project-img">
+            <img src="{{ project.image.url }}" alt="img">
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  <!-- End Projects Section -->
+
+{% endblock %}
